@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+alembic
+python-dotenv
+pydantic-settings
+httpx
+python-dotenv
+psycopg2
+python-jose[cryptography]
+PyJWT
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+requests

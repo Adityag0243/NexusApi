@@ -1,0 +1,1 @@
+Building a focused slice of NexusAPI: a multi-tenant, credit-gated backend API. The word ‘multi-tenant’ means multiple organisations use the same system, and their data must never mix.
