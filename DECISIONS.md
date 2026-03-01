@@ -20,4 +20,6 @@ total 6 atomic steps and they can *overlap* each other
 
 > so final balance equals 150 but actual balance must be equal to 140.
 
-**So we use transaction ledger to keep track of all the transactions and at the end we can calculate the balance.**
+**So we use transaction ledger to keep track of all the transactions and at the end we can calculate the balance let say using SUM() function.**
+
+> Trade-off: While calculating SUM() is computationally heavier than reading a single column, PostgreSQL handles this efficiently with indexing. At massive scale, this could be optimized using daily snapshots like every night calculate the sum of all transactions and store it in a column next day start fresh appending + previous day's total.
