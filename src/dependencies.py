@@ -31,16 +31,6 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
 
         # 4. Decode
     try:
-        # TEST BYPASS
-        if token == "test_admin_token":
-            user_stmt = select(User).limit(1)
-            result = await db.execute(user_stmt)
-            user = result.scalar_one_or_none()
-            if user:
-                request.state.user_id = str(user.id)
-                request.state.organisation_id = str(user.organisation_id)
-                return user
-                
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
         user_id = payload.get("user_id")
         

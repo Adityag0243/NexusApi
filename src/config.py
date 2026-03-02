@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
     GOOGLE_REDIRECT_URI: str
+    REDIS_URL: str = "redis://localhost:6379"
 
     class Config:
         env_file = ".env"
