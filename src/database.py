@@ -37,7 +37,7 @@ load_dotenv(dotenv_path=env_path)
 
 # 2. Grab the URL from the environment
 DATABASE_URL = os.getenv("DATABASE_URL")
-# print("\n\n\ndatabase url :: ",DATABASE_URL)
+
 
 # 3. Fail loudly if it's STILL missing
 if not DATABASE_URL:

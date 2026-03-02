@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+app = FastAPI(title="NexusAPI")
 
-from src.routes import auth
+from src.routes import auth, users, credits, api
 app.include_router(auth.router)
-from src.routes import users
 app.include_router(users.router)
+app.include_router(credits.router)
+app.include_router(api.router)
 
 @app.get("/health")
 async def health_check():
-    # your health check logic here
+    """Health check. Returns 200 if healthy."""
     return {"status": "healthy"}
