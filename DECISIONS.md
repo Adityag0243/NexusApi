@@ -23,3 +23,24 @@ total 6 atomic steps and they can *overlap* each other
 **So we use transaction ledger to keep track of all the transactions and at the end we can calculate the balance let say using SUM() function.**
 
 > Trade-off: While calculating SUM() is computationally heavier than reading a single column, PostgreSQL handles this efficiently with indexing. At massive scale, this could be optimized using daily snapshots like every night calculate the sum of all transactions and store it in a column next day start fresh appending + previous day's total.
+
+
+
+# Question R5. What happens if deduct_credits is called twice simultaneously for thesame organisation with exactly enough credits for one call?
+
+Answer R5: I am using **with_for_update()** in *credit_service.py* for **ROW LEVEL LOCK** so that no other transaction can modify the row until the current transaction is complete other simultaneous transactions will wait for the current transaction to complete so there will be no ambiguity in the final balance.
+
+> Trade-off: This will prevent other transactions from modifying the row until the current transaction is complete. But it will also prevent other transactions from reading the row until the current transaction is complete.
+
+# Question R6. What happens if the deduction succeeds but the processing fails? Credits were spent but no result was returned.
+
+Answer R6: So there are two possible ways to handle this situation:
+
+1. **Lock till end**: Instead of locking the db just for the duration of the transaction, we can lock the db till the ai report is not generated and we are sure that we can return the result to the user. This will prevent other transactions from modifying the row until the current transaction is complete.
+>But our actual AI processesing is pretty heavy and it might take a lot of time so we don't want to lock the db for that long.
+
+2. **Refund the credits**: First we will deduct the credits and commit the transaction immediately to release the lock so other users can keep working. Parallely we will do the ai processing. If the AI processing crashes later, we catch the error and issue a new +25 transaction as a "Refund". 
+
+> I am going with the second approach because it is more common and it is also more flexible and not locking the db for a long time.
+
+
