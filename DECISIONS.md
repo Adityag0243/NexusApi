@@ -53,3 +53,10 @@ Answer 3: For now i just use try and except block and if worker fails i simply r
 3. Let say our system is working fine but suddenly AI provider goes down and if multiple consecutive failures happen then stop picking up new jobs from the queue entirely and immediately refunds everyone until the AI provider comes back online.
 
 > For now i use a simpler logic of just refunding the credits after one failure.
+
+## R8. What happens if Redis is unavailable? Does the entire API go down, or does it fail open (allow all requests)? 
+
+Answer R8: The API is configured to "fail open", meaning it will bypass the rate limit checks and allow all requests if Redis goes down.
+
+> Justification: Rate limiting is secondary resource for protecting our primary resource ( AI processing ) from abuse. Just because rate limiting is down we should not stop our primary resource from working. By failing open, the application remains highly available during such secondary resource failure.
+> The temporary trade-off is higher potential load or abuse, which is a better alternative than failing to fulfill legitimate AI processing requests that the organization has already paid credits for. 

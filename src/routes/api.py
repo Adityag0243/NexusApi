@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,9 +14,14 @@ from src.config import settings
 from src.models.models import User, CreditTransaction
 from src.dependencies import get_current_user, cookie_sec
 from src.services.credit_service import deduct_credits, InsufficientCreditsError
+from src.services.rate_limit import check_rate_limit
 
 
-router = APIRouter(prefix="/api", tags=["Product API"])
+router = APIRouter(
+    prefix="/api", 
+    tags=["Product API"],
+    dependencies=[Depends(check_rate_limit)]
+)
 
 # 1. Strict validation: text must be between 10 and 2000 characters
 class AnalyseRequest(BaseModel):
@@ -25,6 +30,7 @@ class AnalyseRequest(BaseModel):
 @router.post("/analyse")
 async def analyse_text(
     request: AnalyseRequest,
+    req: Request,
     auth_cookie: str = Depends(cookie_sec),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -44,7 +50,11 @@ async def analyse_text(
         await db.rollback()
         return JSONResponse(
             status_code=402,
-            content={"error": "insufficient_credits", "balance": e.available, "required": required_credits}
+            content={
+                "error": "insufficient_credits", 
+                "message": f"Insufficient credits. Balance: {e.available}, Required: {required_credits}",
+                "request_id": getattr(req.state, "request_id", "unknown")
+            }
         )
 
     # 2. Dummy AI processing ( it might fail due to various reasons )
@@ -86,6 +96,7 @@ class SummariseRequest(BaseModel):
 @router.post("/summarise")
 async def summarise_text(
     request: SummariseRequest,
+    req: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -104,15 +115,17 @@ async def summarise_text(
         await db.rollback()
         return JSONResponse(
             status_code=402,
-            content={"error": "insufficient_credits", "balance": e.available, "required": required_credits}
+            content={
+                "error": "insufficient_credits", 
+                "message": f"Insufficient credits. Balance: {e.available}, Required: {required_credits}",
+                "request_id": getattr(req.state, "request_id", "unknown")
+            }
         )
 
     # 2. Connect to the Redis
-    # Note: In production, we'd reuse one connection pool, but this works perfectly for the assignment.
     redis_pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
     
     # 3. Pin the job to the rail! 
-    # We pass the org_id so the Chef knows who ordered it (for security).
     job = await redis_pool.enqueue_job(
         'summarise_task', # This is the name of the Chef's recipe
         request.text, 

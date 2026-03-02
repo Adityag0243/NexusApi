@@ -19,6 +19,10 @@ if not logger.handlers:
     handler = logging.StreamHandler()
     logger.addHandler(handler)
 
+# Disable default uvicorn access logger to ensure ONLY structured JSON logs are emitted
+uvicorn_access_logger = logging.getLogger("uvicorn.access")
+uvicorn_access_logger.disabled = True
+
 @app.middleware("http")
 async def structured_logging_middleware(request: Request, call_next: Callable) -> Response:
     start_time = time.time()
@@ -68,13 +72,15 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     error_code = getattr(exc, "error_code", "http_error")
     # If it's the standard auth error etc., detail might just be a string.
     # In some routes we might raise HTTPException and we want a specific "error" code.
+    headers = getattr(exc, "headers", None)
     return JSONResponse(
         status_code=exc.status_code,
         content={
             "error": error_code if error_code != "http_error" else f"error_{exc.status_code}",
             "message": str(exc.detail),
             "request_id": request_id
-        }
+        },
+        headers=headers
     )
 
 @app.exception_handler(RequestValidationError)
@@ -102,7 +108,7 @@ async def root():
     return {"message": "NexusAPI is running", "status": "healthy"}
 
 @app.get("/health")
-async def health_check(db: AsyncSession = Depends(get_db)):
+async def health_check(request: Request, db: AsyncSession = Depends(get_db)):
     """Health check. Returns 200 if healthy, 503 if database unreachable."""
     try:
         await db.execute(text("SELECT 1"))
@@ -112,9 +118,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
             content={
                 "error": "service_unavailable",
                 "message": "Database unreachable.",
-                "request_id": getattr(db.info.get("request", {}), "state", type("State", (), {"request_id": "unknown"}())).request_id if hasattr(db, "info") else "unknown"
-                # To be safe, wait, request ID is attached to request, health check doesn't need to return request ID properly if it fails, but doing it consistently is good. We'll simply omit it here, it will be wrapped by the middleware?
-                # Actually, in a route, we can just inject `request: Request`.
+                "request_id": getattr(request.state, "request_id", "unknown")
             }
         )
     return {"status": "healthy"}
