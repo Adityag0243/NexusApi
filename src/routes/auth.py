@@ -99,4 +99,23 @@ async def auth_callback(code: str, db: AsyncSession = Depends(get_db)):
     }
     token = jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.ALGORITHM)
     
-    return {"access_token": token, "token_type": "bearer"}
+    redirect_url = "http://localhost:8000/docs" if "localhost" in settings.GOOGLE_REDIRECT_URI else "https://nexusapi-2m3c.onrender.com/docs"
+    print(redirect_url)
+    response = RedirectResponse(url=redirect_url) 
+    print(response)
+    is_production = "localhost" not in settings.GOOGLE_REDIRECT_URI
+    print(is_production)
+
+
+    print("token : ", token)
+
+    response.set_cookie(
+        key="access_token", 
+        value=f"Bearer {token}", 
+        httponly=True,   
+        secure=is_production,     
+        samesite="lax",   
+        max_age=3600     
+    )
+
+    return response
