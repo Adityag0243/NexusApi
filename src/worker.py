@@ -9,7 +9,7 @@ async def summarise_task(ctx, text: str, org_id: str, user_id: str):
     
     try:
         # 1. Simulating heavy AI processing
-        await asyncio.sleep(2) 
+        await asyncio.sleep(30) 
         
         # Can Simulate a random failure for testing purposes
         # raise ValueError("AI Model Timeout")

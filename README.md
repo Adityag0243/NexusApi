@@ -6,7 +6,8 @@ NexusAPI is a multi-tenant, credit-gated backend API built with FastAPI. It is d
 - **Multi-Tenancy**: Securely partitions data across multiple organizations.
 - **Credit-Gated Access**: Monitors and strictly controls API usage based on assigned credits.
 - **Authentication**: Integrates with Google OAuth and utilizes JWT for secure session management.
-- **Asynchronous Processing**: Uses Redis and ARQ for handling background tasks and summarization.
+- **Asynchronous Processing**: Uses Redis and ARQ for handling background tasks and summarization. (for now ai processesing is mocked by 30 seconds sleep)
+> change of status from pending to processing to completed will take 30 seconds
 - **Database**: Fully asynchronous PostgreSQL integration using `asyncpg` and `SQLAlchemy`.
 
 ## Tech Stack
