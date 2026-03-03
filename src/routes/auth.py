@@ -73,7 +73,7 @@ async def auth_callback(code: str, db: AsyncSession = Depends(get_db)):
         await db.flush() # Get the org ID
         role = "admin"
     
-    # 3. Create or Update User [cite: 59]
+    # 3. Create or Update User
     user_stmt = select(User).where(User.email == email)
     user_result = await db.execute(user_stmt)
     user = user_result.scalar_one_or_none()
@@ -115,7 +115,7 @@ async def auth_callback(code: str, db: AsyncSession = Depends(get_db)):
         httponly=True,   
         secure=is_production,     
         samesite="lax",   
-        max_age=3600     
+        max_age=86400     
     )
 
     return response
