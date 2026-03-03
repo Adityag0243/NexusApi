@@ -70,8 +70,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     request_id = getattr(request.state, "request_id", "unknown")
     error_code = getattr(exc, "error_code", "http_error")
-    # If it's the standard auth error etc., detail might just be a string.
-    # In some routes we might raise HTTPException and we want a specific "error" code.
+
     headers = getattr(exc, "headers", None)
     return JSONResponse(
         status_code=exc.status_code,
@@ -86,11 +85,19 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     request_id = getattr(request.state, "request_id", "unknown")
+    
+    error_messages = []
+    for err in exc.errors():
+        loc = ".".join([str(x) for x in err.get("loc", [])])
+        msg = err.get("msg", "")
+        error_messages.append(f"{loc}: {msg}")
+        
     return JSONResponse(
         status_code=422,
         content={
             "error": "validation_error",
-            "message": "Invalid request parameters.",
+            "message": "Invalid request parameters: " + ", ".join(error_messages),
+            "details": exc.errors(),
             "request_id": request_id
         }
     )
