@@ -1,7 +1,7 @@
 
 ## Question 1. Why does the credit system use a transaction ledger instead of a balance column?
 
-Answer 1: If we just put one column for balance we might face the issue of **race condition**. Let suppose one of the user using the credit ( i.e. spending x credits ) at the same time admin is trying to add credit ( i.e. adding y credits ) now these operations are happening at the same time and at the same memory block so there is a **chance of data corruption**, which can cause either the organization loose the more credit or gain more credit than expected.
+Answer 1: If we just put one column for balance we might face the issue of `race condition`. Let suppose one of the user using the credit ( i.e. spending x credits ) at the same time admin is trying to add credit ( i.e. adding y credits ) now these operations are happening at the same time and at the same memory block so there is a **chance of data corruption**, which can cause either the organization loose the more credit or gain more credit than expected.
 
 Example : current balance == 100
 operation 1 : user spending 10 credits
@@ -28,7 +28,7 @@ total 6 atomic steps and they can *overlap* each other
 
 ## Question 2 / R5. What happens if deduct_credits is called twice simultaneously for the same organisation with exactly enough credits for one call?  / simultaneous credit deduction problem.
 
-Answer R5: I am using **with_for_update()** in *credit_service.py* for **ROW LEVEL LOCK** so that no other transaction can modify the row until the current transaction is complete other simultaneous transactions will wait for the current transaction to complete so there will be no ambiguity in the final balance.
+Answer R5: I am using `with_for_update()` in *credit_service.py* for **ROW LEVEL LOCK** so that no other transaction can modify the row until the current transaction is complete other simultaneous transactions will wait for the current transaction to complete so there will be no ambiguity in the final balance.
 
 > Trade-off: This will prevent other transactions from modifying the row until the current transaction is complete. But it will also prevent other transactions from reading the row until the current transaction is complete.
 
@@ -48,15 +48,15 @@ Answer R6: So there are two possible ways to handle this situation:
 Answer 3: For now i just use try and except block and if worker fails i simply refund the credits. But this is not a very good approach to it. Other approach which i feel is good enough is following:
 
 1. Simply retry the task 2-3 times with some intervals and if it fails again then refund the credits.
-2. Dead Letter Queue (DLQ)instead of refunding immediately move the job to a special queue called the DLQ, now admin can manually or using some script needs to review those failed jobs and decide whether to refund or not.
+2. Dead Letter Queue (DLQ) instead of refunding immediately move the job to a special queue called the `DLQ`, now admin can manually or using some script needs to review those failed jobs and decide whether to refund or not.
 > this is important because sometimes the ai might be down for maintenance and we don't want to refund the credits immediately or let say user put his/her efforts for the /summarise endpoint and we simply can't refund the credits.
 3. Let say our system is working fine but suddenly AI provider goes down and if multiple consecutive failures happen then stop picking up new jobs from the queue entirely and immediately refunds everyone until the AI provider comes back online.
 
-> For now i use a simpler logic of just refunding the credits after one failure.
+> For now I am using a simpler logic of just refunding the credits after one failure.
 
 ## R8. What happens if Redis is unavailable? Does the entire API go down, or does it fail open (allow all requests)? 
 
-Answer R8: The API is configured to "fail open", meaning it will bypass the rate limit checks and allow all requests if Redis goes down.
+Answer R8: The API is configured to `fail open`, meaning it will bypass the rate limit checks and allow all requests if Redis goes down.
 
 > Justification: Rate limiting is secondary resource for protecting our primary resource ( AI processing ) from abuse. Just because rate limiting is down we should not stop our primary resource from working. By failing open, the application remains highly available during such secondary resource failure.
 > The temporary trade-off is higher potential load or abuse, which is a better alternative than failing to fulfill legitimate AI processing requests that the organization has already paid credits for. 
