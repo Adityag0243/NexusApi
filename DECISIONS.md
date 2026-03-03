@@ -61,6 +61,9 @@ Answer R8: The API is configured to "fail open", meaning it will bypass the rate
 > Justification: Rate limiting is secondary resource for protecting our primary resource ( AI processing ) from abuse. Just because rate limiting is down we should not stop our primary resource from working. By failing open, the application remains highly available during such secondary resource failure.
 > The temporary trade-off is higher potential load or abuse, which is a better alternative than failing to fulfill legitimate AI processing requests that the organization has already paid credits for. 
 
+## Question 4. Walk through the flow of a duplicate request with the same Idempotency-Key. Where is the check performed? What database constraint backs it up? What happens if two identical requests arrive simultaneously — before either has completed? 
+
+Answer 4. Not able to do this but I have my partial theoretical answer, if two identical request arrive I will raise `PROCESSING` while inserting the first one to reach at that part so that other will not able to enter as we will raise or throw `UniqueConstraint` error so that second process can send `409` or wait for first one to insert in DB.
 
 ## Question 5. Assume your system is handling 10 times as many requests. You don’t need to implement anything. Just identify the most likely bottleneck and describe in one paragraph what you would do about it. 
 
