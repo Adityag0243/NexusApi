@@ -60,3 +60,10 @@ Answer R8: The API is configured to "fail open", meaning it will bypass the rate
 
 > Justification: Rate limiting is secondary resource for protecting our primary resource ( AI processing ) from abuse. Just because rate limiting is down we should not stop our primary resource from working. By failing open, the application remains highly available during such secondary resource failure.
 > The temporary trade-off is higher potential load or abuse, which is a better alternative than failing to fulfill legitimate AI processing requests that the organization has already paid credits for. 
+
+
+## Question 5. Assume your system is handling 10 times as many requests. You don’t need to implement anything. Just identify the most likely bottleneck and describe in one paragraph what you would do about it. 
+
+Answer 5: If the system handles 10 times as many requests, the most likely bottleneck will be the background worker queue (ARQ) and upstream LLM API rate limits. 
+1. We might need to run multiple instances of the worker (horizontal scaling) and use a load balancer to distribute the requests among them. 
+2. We need better way of caching may be we can cache many very frequent response of ai for common queries in real usecase of /analyse and /summarise endpoints.
