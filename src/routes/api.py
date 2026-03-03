@@ -100,7 +100,12 @@ async def summarise_text(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Async product endpoint. Costs 10 credits. Returns a job_id."""
+    """
+    Async product endpoint. Costs 10 credits. Returns a job_id.
+
+    **Note:** This background job takes approximately **60 seconds** to process.
+    Use the `/api/jobs/{job_id}` endpoint to poll for the `"complete"` status.
+    """
     required_credits = 10
     
     # 1. Deduct credits immediately ( lock and commit )
@@ -142,7 +147,12 @@ async def get_job_status(
     job_id: str,
     current_user: User = Depends(get_current_user)
 ):
-    """Polls job status. Returns result when completed."""
+    """
+    Polls job status. Returns result when completed.
+    
+    **Note:** Jobs submitted to `/api/summarise` take approximately **60 seconds** to complete. 
+    You will see `"status": "in_progress"` or `"deferred"` during this time before it changes to `"complete"`.
+    """
     redis_pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
     job = Job(job_id, redis_pool)
     
