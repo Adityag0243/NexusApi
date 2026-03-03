@@ -49,4 +49,11 @@ Start the development server:
 ```bash
 uvicorn src.main:app --reload
 ```
+
+### 6. Running the Worker
+Start the ARQ worker:
+```bash
+python src.run_worker
+```
+
 The API will be available at `http://localhost:8000`. You can access the interactive API documentation at `http://localhost:8000/docs`.
